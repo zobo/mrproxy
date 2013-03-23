@@ -3,9 +3,9 @@ package protocol
 
 import (
 	"bufio"
+	"fmt"
 	"strconv"
 	"strings"
-	"fmt"
 	"time"
 )
 
@@ -13,20 +13,19 @@ import (
 // Exptime will always be 0 or epoch
 type McRequest struct {
 	Command string
-	Key string
-	Keys []string
-	Flags string
+	Key     string
+	Keys    []string
+	Flags   string
 	Exptime int64
-	Data []byte
-	Value int64
-	Cas string
+	Data    []byte
+	Value   int64
+	Cas     string
 	Noreply bool
 }
 
 type ProtocolError struct {
 	Description string
 }
-
 
 func (e ProtocolError) Error() string {
 	return fmt.Sprintf("Protocol error: %s", e.Description)
@@ -63,16 +62,16 @@ func ReadRequest(r *bufio.Reader) (req *McRequest, err error) {
 		req.Flags = arr[2]
 		req.Exptime, err = strconv.ParseInt(arr[3], 10, 64)
 		if err != nil {
-			return nil, NewProtocolError("cannot read exptime "+err.Error())
+			return nil, NewProtocolError("cannot read exptime " + err.Error())
 		}
-		if req.Exptime>0 {
+		if req.Exptime > 0 {
 			if req.Exptime < time.Now().Unix() {
-				req.Exptime = time.Now().Unix()+req.Exptime
+				req.Exptime = time.Now().Unix() + req.Exptime
 			}
 		}
 		bytes, err := strconv.Atoi(arr[4])
 		if err != nil {
-			return nil, NewProtocolError("cannot read bytes "+err.Error())
+			return nil, NewProtocolError("cannot read bytes " + err.Error())
 		}
 		if len(arr) > 5 && arr[5] == "noreply" {
 			req.Noreply = true
@@ -112,7 +111,7 @@ func ReadRequest(r *bufio.Reader) (req *McRequest, err error) {
 		req.Flags = arr[2]
 		req.Exptime, err = strconv.ParseInt(arr[3], 10, 64)
 		if err != nil {
-			return nil, NewProtocolError("cannot read exptime "+err.Error())
+			return nil, NewProtocolError("cannot read exptime " + err.Error())
 		}
 		bytes, err := strconv.Atoi(arr[4])
 		if err != nil {
@@ -172,7 +171,7 @@ func ReadRequest(r *bufio.Reader) (req *McRequest, err error) {
 
 		req.Value, err = strconv.ParseInt(arr[2], 10, 64)
 		if err != nil {
-			return nil, NewProtocolError("cannot read value "+err.Error())
+			return nil, NewProtocolError("cannot read value " + err.Error())
 		}
 		return req, nil
 	case "touch":
@@ -181,7 +180,7 @@ func ReadRequest(r *bufio.Reader) (req *McRequest, err error) {
 		// version\r\n
 	case "quit":
 		// quit\r\n
-		return &McRequest{Command:"quit"}, nil
+		return &McRequest{Command: "quit"}, nil
 	}
 	return nil, NewProtocolError(fmt.Sprintf("unknown command %q", arr[0]))
 }

@@ -9,8 +9,8 @@ import (
 
 type McEntry struct {
 	Key, Flags string
-	Exptime time.Time
-	Data []byte
+	Exptime    time.Time
+	Data       []byte
 	// others?
 }
 
@@ -25,11 +25,11 @@ func NewMcEntry(key, flags string, exptime int64, data []byte) *McEntry {
 	if exptime != 0 {
 		ex = time.Unix(exptime, 0)
 	}
-	return &McEntry{key, flags, ex, data};
+	return &McEntry{key, flags, ex, data}
 }
 
 func AddCache(e *McEntry) {
-	cache[e.Key] = e;
+	cache[e.Key] = e
 
 	// free mem?
 	//if len(cache) > 10000 {
@@ -40,8 +40,8 @@ func AddCache(e *McEntry) {
 func GetCache(key string) *McEntry {
 	e := cache[key]
 	if e != nil && !e.Exptime.IsZero() && e.Exptime.Before(time.Now()) {
-//		delete(cache, key)
-//		return nil
+		//		delete(cache, key)
+		//		return nil
 	}
-	return cache[key];
+	return cache[key]
 }
