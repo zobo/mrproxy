@@ -8,10 +8,8 @@ import (
 )
 
 type McEntry struct {
-	Key, Flags string
-	Exptime    time.Time
-	Data       []byte
-	// others?
+	McValue
+	Exptime time.Time
 }
 
 var cache map[string]*McEntry
@@ -25,7 +23,7 @@ func NewMcEntry(key, flags string, exptime int64, data []byte) *McEntry {
 	if exptime != 0 {
 		ex = time.Unix(exptime, 0)
 	}
-	return &McEntry{key, flags, ex, data}
+	return &McEntry{McValue{key, flags, data}, ex}
 }
 
 func AddCache(e *McEntry) {
