@@ -64,12 +64,12 @@ func (p *RedisProxy) Process(req *McRequest) McResponse {
 		if err != nil {
 			return serverError(err)
 		}
-		if r>0 {
+		if r > 0 {
 			return McResponse{Response: "DELETED"}
 		}
 		return McResponse{Response: "NOT_FOUND"}
 
-	// todo "touch"...
+		// todo "touch"...
 	}
 
 	return McResponse{Response: "ERROR"}
@@ -78,9 +78,9 @@ func (p *RedisProxy) Process(req *McRequest) McResponse {
 
 func toInterface(s []string) []interface{} {
 
-ret := make([]interface{}, len(s))
-for i,v:= range s {
- ret[i] = interface{}(v)
-}
-return ret
+	ret := make([]interface{}, len(s))
+	for i, v := range s {
+		ret[i] = interface{}(v)
+	}
+	return ret
 }
