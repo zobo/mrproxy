@@ -18,7 +18,11 @@ func serverError(err error) McResponse {
 	return McResponse{Response: "SERVER_ERROR " + err.Error()}
 }
 
-// process a request and generate a resonse
+func serverErrorText(err error, text string) McResponse {
+	return McResponse{Response: "SERVER_ERROR " + err.Error() + " (" + text+")"}
+}
+
+// process a request and generate a response
 func (p *RedisProxy) Process(req *McRequest) McResponse {
 
 	switch req.Command {
@@ -33,9 +37,15 @@ func (p *RedisProxy) Process(req *McRequest) McResponse {
 			}
 			if r[0] != nil {
 				data, err := redis.Bytes(r[0], nil)
-				flags, err := redis.String(r[1], err)
 				if err != nil {
-					return serverError(err)
+					return serverErrorText(err,"data")
+				}
+				flags := "0"
+				if r[1] != nil {
+					flags, err = redis.String(r[1], nil)
+					if err != nil {
+						return serverErrorText(err, "flags")
+					}
 				}
 				// todo, both can return error
 				res.Values = append(res.Values, McValue{req.Keys[i], flags, data})
