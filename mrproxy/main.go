@@ -10,10 +10,9 @@ import (
 	"time"
 )
 
-const listenAddr = "0.0.0.0:11211"
-
 // "10.13.37.106:6379"
 var redis_server = flag.String("server", "127.0.0.1:6379", "Redis server to connect to")
+var listen_addr = flag.String("bind", "0.0.0.0:11211", "Bind address and port")
 
 func main() {
 
@@ -38,7 +37,7 @@ func main() {
 		},
 	}
 
-	l, err := net.Listen("tcp", listenAddr)
+	l, err := net.Listen("tcp", *listen_addr)
 	if err != nil {
 		log.Fatalln(err)
 	}
