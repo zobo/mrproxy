@@ -178,9 +178,10 @@ func ReadRequest(r *bufio.Reader) (req *McRequest, err error) {
 		// touch <key> <exptime> [noreply]\r\n
 	case "version":
 		// version\r\n
+		return &McRequest{Command: arr[0]}, nil
 	case "quit":
 		// quit\r\n
-		return &McRequest{Command: "quit"}, nil
+		return &McRequest{Command: arr[0]}, nil
 	}
 	return nil, NewProtocolError(fmt.Sprintf("unknown command %q", arr[0]))
 }

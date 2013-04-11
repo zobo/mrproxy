@@ -80,6 +80,10 @@ func processMc(c net.Conn, pool *redis.Pool) {
 		switch req.Command {
 		case "quit":
 			return
+		case "version":
+			res := protocol.McResponse{Response: "VERSION mrproxy 0.1"}
+			bw.WriteString(res.Protocol())
+			bw.Flush()
 		default:
 			res := redisProxy.Process(req)
 			if !req.Noreply {
