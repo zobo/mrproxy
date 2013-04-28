@@ -182,6 +182,10 @@ func ReadRequest(r *bufio.Reader) (req *McRequest, err error) {
 	case "quit":
 		// quit\r\n
 		return &McRequest{Command: arr[0]}, nil
+	case "stats":
+		// stats\r\n
+		// TODO stats <args>\r\n
+		return &McRequest{Command: arr[0]}, nil
 	}
 	return nil, NewProtocolError(fmt.Sprintf("unknown command %q", arr[0]))
 }

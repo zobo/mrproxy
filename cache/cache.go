@@ -1,14 +1,15 @@
 /*
 Local cache if we cant connect to server
 */
-package protocol
+package cache
 
 import (
+	"github.com/zobo/mrproxy/protocol"
 	"time"
 )
 
 type McEntry struct {
-	McValue
+	protocol.McValue
 	Exptime time.Time
 }
 
@@ -23,7 +24,7 @@ func NewMcEntry(key, flags string, exptime int64, data []byte) *McEntry {
 	if exptime != 0 {
 		ex = time.Unix(exptime, 0)
 	}
-	return &McEntry{McValue{key, flags, data}, ex}
+	return &McEntry{protocol.McValue{key, flags, data}, ex}
 }
 
 func AddCache(e *McEntry) {
@@ -31,7 +32,7 @@ func AddCache(e *McEntry) {
 
 	// free mem?
 	//if len(cache) > 10000 {
-	//	
+	//
 	//}
 }
 

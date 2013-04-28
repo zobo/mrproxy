@@ -1,7 +1,7 @@
 /*
 Local cache if we cant connect to server
 */
-package protocol
+package cache
 
 import (
 	"testing"

@@ -1,7 +1,8 @@
-package protocol
+package proxy
 
 import (
 	"github.com/garyburd/redigo/redis"
+	"github.com/zobo/mrproxy/protocol"
 )
 
 type RedisProxy struct {
@@ -14,20 +15,20 @@ func NewRedisProxy(conn redis.Conn) *RedisProxy {
 	return r
 }
 
-func serverError(err error) McResponse {
-	return McResponse{Response: "SERVER_ERROR " + err.Error()}
+func serverError(err error) protocol.McResponse {
+	return protocol.McResponse{Response: "SERVER_ERROR " + err.Error()}
 }
 
-func serverErrorText(err error, text string) McResponse {
-	return McResponse{Response: "SERVER_ERROR " + err.Error() + " (" + text+")"}
+func serverErrorText(err error, text string) protocol.McResponse {
+	return protocol.McResponse{Response: "SERVER_ERROR " + err.Error() + " (" + text + ")"}
 }
 
 // process a request and generate a response
-func (p *RedisProxy) Process(req *McRequest) McResponse {
+func (p *RedisProxy) Process(req *protocol.McRequest) protocol.McResponse {
 
 	switch req.Command {
 	case "get":
-		res := McResponse{}
+		res := protocol.McResponse{}
 		for i := range req.Keys {
 
 			r, err := redis.Values(p.conn.Do("MGET", req.Keys[i], req.Keys[i]+"_mcflags"))
@@ -38,7 +39,7 @@ func (p *RedisProxy) Process(req *McRequest) McResponse {
 			if r[0] != nil {
 				data, err := redis.Bytes(r[0], nil)
 				if err != nil {
-					return serverErrorText(err,"data")
+					return serverErrorText(err, "data")
 				}
 				flags := "0"
 				if r[1] != nil {
@@ -48,7 +49,7 @@ func (p *RedisProxy) Process(req *McRequest) McResponse {
 					}
 				}
 				// todo, both can return error
-				res.Values = append(res.Values, McValue{req.Keys[i], flags, data})
+				res.Values = append(res.Values, protocol.McValue{req.Keys[i], flags, data})
 			}
 		}
 		res.Response = "END"
@@ -67,7 +68,7 @@ func (p *RedisProxy) Process(req *McRequest) McResponse {
 			}
 		}
 
-		return McResponse{Response: "STORED"}
+		return protocol.McResponse{Response: "STORED"}
 
 	case "delete":
 		r, err := redis.Int(p.conn.Do("DEL", toInterface(req.Keys)...))
@@ -75,14 +76,14 @@ func (p *RedisProxy) Process(req *McRequest) McResponse {
 			return serverError(err)
 		}
 		if r > 0 {
-			return McResponse{Response: "DELETED"}
+			return protocol.McResponse{Response: "DELETED"}
 		}
-		return McResponse{Response: "NOT_FOUND"}
+		return protocol.McResponse{Response: "NOT_FOUND"}
 
 		// todo "touch"...
 	}
 
-	return McResponse{Response: "ERROR"}
+	return protocol.McResponse{Response: "ERROR"}
 
 }
 

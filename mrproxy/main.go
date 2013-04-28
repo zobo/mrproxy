@@ -5,6 +5,8 @@ import (
 	"flag"
 	"github.com/garyburd/redigo/redis"
 	"github.com/zobo/mrproxy/protocol"
+	"github.com/zobo/mrproxy/proxy"
+	"github.com/zobo/mrproxy/stats"
 	"log"
 	"net"
 	"time"
@@ -41,6 +43,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	log.Printf("Listening %v", l)
 	for {
 		c, err := l.Accept()
 		if err != nil {
@@ -54,6 +57,9 @@ func processMc(c net.Conn, pool *redis.Pool) {
 	defer log.Printf("%v end processMc", c)
 	defer c.Close()
 
+	stats.Connect()
+	defer stats.Disconnect()
+
 	// process
 	br := bufio.NewReader(c)
 	bw := bufio.NewWriter(c)
@@ -62,7 +68,8 @@ func processMc(c net.Conn, pool *redis.Pool) {
 	conn := pool.Get()
 	defer conn.Close()
 
-	redisProxy := protocol.NewRedisProxy(conn)
+	redisProxy := proxy.NewRedisProxy(conn)
+	proxy := stats.NewStatsProxy(redisProxy)
 
 	for {
 		req, err := protocol.ReadRequest(br)
@@ -85,7 +92,7 @@ func processMc(c net.Conn, pool *redis.Pool) {
 			bw.WriteString(res.Protocol())
 			bw.Flush()
 		default:
-			res := redisProxy.Process(req)
+			res := proxy.Process(req)
 			if !req.Noreply {
 				log.Printf("%v Res: %+v\n", c, res)
 				bw.WriteString(res.Protocol())
