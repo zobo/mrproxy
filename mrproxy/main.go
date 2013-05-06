@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+var version string
+
 // "10.13.37.106:6379"
 var redis_server = flag.String("server", "127.0.0.1:6379", "Redis server to connect to")
 var listen_addr = flag.String("bind", "0.0.0.0:11211", "Bind address and port")
@@ -88,7 +90,7 @@ func processMc(c net.Conn, pool *redis.Pool) {
 		case "quit":
 			return
 		case "version":
-			res := protocol.McResponse{Response: "VERSION mrproxy 0.1"}
+			res := protocol.McResponse{Response: "VERSION mrproxy " + version}
 			bw.WriteString(res.Protocol())
 			bw.Flush()
 		default:
