@@ -6,7 +6,9 @@ import (
 	"bytes"
 	"github.com/zobo/mrproxy/protocol"
 	"github.com/zobo/mrproxy/proxy"
+	"os"
 	"strconv"
+	"time"
 )
 
 // type to process "stats" request and do command counting
@@ -19,6 +21,7 @@ func NewStatsProxy(next proxy.ProtocolProxy) *StatsProxy {
 }
 
 var stats = statsData{}
+var startTime = time.Now()
 
 type statsData struct {
 	cmd_get           int
@@ -54,6 +57,14 @@ func (proxy *StatsProxy) Process(req *protocol.McRequest) protocol.McResponse {
 		return proxy.next.Process(req)
 	case "stats":
 		var b bytes.Buffer
+		b.WriteString("STAT pid ")
+		b.WriteString(strconv.Itoa(os.Getpid()))
+		b.WriteString("\r\n")
+
+		b.WriteString("STAT uptime ")
+		b.WriteString(strconv.Itoa(int(time.Now().Sub(startTime).Seconds())))
+		b.WriteString("\r\n")
+
 		b.WriteString("STAT cmd_get ")
 		b.WriteString(strconv.Itoa(stats.cmd_get))
 		b.WriteString("\r\n")
