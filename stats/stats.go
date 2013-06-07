@@ -1,7 +1,5 @@
 package stats
 
-// TODO move out of package
-
 import (
 	"bytes"
 	"github.com/zobo/mrproxy/protocol"
@@ -11,13 +9,24 @@ import (
 	"time"
 )
 
-// type to process "stats" request and do command counting
-type StatsProxy struct {
-	next proxy.ProtocolProxy
+// the available operations
+type statsOps struct {
+	data       chan chan statsData
+	closing    chan bool
+	connect    chan bool
+	disconnect chan bool
+	cmd_get    chan bool
+	cmd_set    chan bool
 }
 
-func NewStatsProxy(next proxy.ProtocolProxy) *StatsProxy {
-	return &StatsProxy{next: next}
+// the operations
+var ops statsOps = statsOps{
+	data:       make(chan chan statsData),
+	closing:    make(chan bool),
+	connect:    make(chan bool, 100),
+	disconnect: make(chan bool, 100),
+	cmd_get:    make(chan bool, 100),
+	cmd_set:    make(chan bool, 100),
 }
 
 var stats = statsData{}
@@ -32,28 +41,69 @@ type statsData struct {
 	get_misses        int
 }
 
+// for select loop
+func loop() {
+	for {
+		select {
+		case <-ops.closing:
+			// we should care about errors, but we don't
+			close(ops.closing)
+			return
+		case <-ops.connect:
+			stats.curr_connections++
+			stats.total_connections++
+		case <-ops.disconnect:
+			stats.curr_connections--
+		case <-ops.cmd_get:
+			stats.cmd_get++
+		case <-ops.cmd_set:
+			stats.cmd_set++
+		case datac := <-ops.data:
+			datac <- stats
+		}
+	}
+}
+
+// init things, create the stats process
+func init() {
+	// start the stats loop
+	go loop()
+}
+
+// type to process "stats" request and do command counting
+type StatsProxy struct {
+	next proxy.ProtocolProxy
+}
+
+func NewStatsProxy(next proxy.ProtocolProxy) *StatsProxy {
+	return &StatsProxy{next: next}
+}
+
 func Connect() {
-	stats.curr_connections++
-	stats.total_connections++
+	ops.connect <- true
 }
 
 func Disconnect() {
-	stats.curr_connections--
+	ops.disconnect <- true
 }
 
 // Process the memcache request
 func (proxy *StatsProxy) Process(req *protocol.McRequest) protocol.McResponse {
 
 	// TODO count bytes in, bytes out
+	datac := make(chan statsData)
+	ops.data <- datac
+	stats := <-datac
+
 	switch req.Command {
 	case "get":
-		stats.cmd_get++
+		ops.cmd_get <- true
 		ret := proxy.next.Process(req)
 		stats.get_hits += len(ret.Values)
 		stats.get_misses += len(req.Keys) - len(ret.Values)
 		return ret
 	case "set":
-		stats.cmd_set++
+		ops.cmd_set <- true
 		return proxy.next.Process(req)
 	case "stats":
 		var b bytes.Buffer
